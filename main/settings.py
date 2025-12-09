@@ -29,6 +29,16 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# Allow Render-provided hostname automatically
+render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if render_host and render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_host)
+
+# CSRF trusted origins for hosted domain(s)
+CSRF_TRUSTED_ORIGINS = []
+if render_host:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{render_host}")
+
 
 
 # Application definition
