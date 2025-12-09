@@ -20,14 +20,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
-
-# Run migrations
-RUN python manage.py migrate
+# Collect static files (ignore errors if database isn't ready)
+RUN python manage.py collectstatic --noinput --clear || true
 
 # Expose port
 EXPOSE 8000
 
-# Run the application with Daphne (ASGI server for Channels)
-CMD ["daphne", "main.asgi:application", "--bind", "0.0.0.0", "--port", "8000"]
+# Create entrypoint script to run migrations and start server
+RUN mkdir -p /app/scripts
+RUN echo '#!/bin/bash\nset -e\necho "Running migrations..."\npython manage.py migrate\necho "Starting Daphne..."\nexec daphne main.asgi:application --bind 0.0.0.0 --port 8000' > /app/scripts/entrypoint.sh
+RUN chmod +x /app/scripts/entrypoint.sh
+
+# Run the application
+CMD ["/app/scripts/entrypoint.sh"]
