@@ -27,9 +27,9 @@ RUN python manage.py collectstatic --noinput --clear || true
 EXPOSE 8000
 
 # Create entrypoint script to run migrations and start server
-RUN mkdir -p /app/scripts
-RUN echo '#!/bin/bash\nset -e\necho "Running migrations..."\npython manage.py migrate\necho "Starting Daphne..."\nexec daphne main.asgi:application --bind 0.0.0.0 --port 8000' > /app/scripts/entrypoint.sh
-RUN chmod +x /app/scripts/entrypoint.sh
+RUN mkdir -p /app/scripts && \
+    printf '#!/bin/bash\nset -e\necho "Running migrations..."\npython manage.py migrate --noinput\necho "Starting Daphne..."\nexec daphne main.asgi:application --bind 0.0.0.0 --port ${PORT:-8000}\n' > /app/scripts/entrypoint.sh && \
+    chmod +x /app/scripts/entrypoint.sh
 
 # Run the application
-CMD ["/app/scripts/entrypoint.sh"]
+ENTRYPOINT ["/app/scripts/entrypoint.sh"]
