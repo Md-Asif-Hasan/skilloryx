@@ -1,0 +1,257 @@
+{% extends 'skilloryx/base.html' %}
+{% load static %}
+
+{% block title %}Video Call - Room {{ room_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-video"></i> Video Call - Room: {{ room_name }}</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Local Video</h5>
+                        <video id="localVideo" autoplay muted style="width: 100%; border: 1px solid #ccc;"></video>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Remote Video</h5>
+                        <video id="remoteVideo" autoplay style="width: 100%; border: 1px solid #ccc;"></video>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button id="startCall" class="btn btn-primary">Start Call</button>
+                    <button id="endCall" class="btn btn-danger" disabled>End Call</button>
+                    <span id="status" class="ms-3">Ready to call</span>
+                </div>
+                <div id="errorMessage" class="alert alert-danger mt-3" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const roomName = '{{ room_name }}';
+const localVideo = document.getElementById('localVideo');
+const remoteVideo = document.getElementById('remoteVideo');
+const startCallBtn = document.getElementById('startCall');
+const endCallBtn = document.getElementById('endCall');
+const statusSpan = document.getElementById('status');
+const errorDiv = document.getElementById('errorMessage');
+
+let localStream;
+let peerConnection;
+let websocket;
+let callTimeout;
+const callDuration = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+
+const configuration = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' }
+    ]
+};
+
+// Check permissions
+async function checkPermissions() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        stream.getTracks().forEach(track => track.stop()); // Stop immediately
+        return true;
+    } catch (error) {
+        errorDiv.textContent = 'Camera and microphone permissions are required for video calls.';
+        errorDiv.style.display = 'block';
+        return false;
+    }
+}
+
+// Initialize WebSocket
+function initWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    websocket = new WebSocket(`${protocol}//${window.location.host}/ws/video_call/${roomName}/`);
+
+    websocket.onopen = () => {
+        statusSpan.textContent = 'Connected to signaling server';
+    };
+
+    websocket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleSignalingData(data);
+    };
+
+    websocket.onclose = () => {
+        statusSpan.textContent = 'Disconnected from signaling server';
+    };
+}
+
+// Handle signaling data
+function handleSignalingData(data) {
+    switch (data.type) {
+        case 'offer':
+            handleOffer(data);
+            break;
+        case 'answer':
+            handleAnswer(data);
+            break;
+        case 'ice-candidate':
+            handleIceCandidate(data);
+            break;
+    }
+}
+
+// Get user media
+async function getUserMedia() {
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localVideo.srcObject = localStream;
+        return true;
+    } catch (error) {
+        errorDiv.textContent = 'Failed to access camera and microphone.';
+        errorDiv.style.display = 'block';
+        return false;
+    }
+}
+
+// Create peer connection
+function createPeerConnection() {
+    peerConnection = new RTCPeerConnection(configuration);
+
+    peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+            websocket.send(JSON.stringify({
+                type: 'ice-candidate',
+                candidate: event.candidate
+            }));
+        }
+    };
+
+    peerConnection.ontrack = (event) => {
+        remoteVideo.srcObject = event.streams[0];
+    };
+
+    localStream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, localStream);
+    });
+}
+
+// Start call
+async function startCall() {
+    if (!(await checkPermissions())) return;
+    if (!(await getUserMedia())) return;
+
+    createPeerConnection();
+    initWebSocket();
+
+    try {
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        websocket.send(JSON.stringify({
+            type: 'offer',
+            sdp: offer.sdp
+        }));
+
+        statusSpan.textContent = 'Calling...';
+        startCallBtn.disabled = true;
+        endCallBtn.disabled = false;
+
+        // Set 2-hour timeout
+        callTimeout = setTimeout(() => {
+            endCall();
+            alert('Call ended due to 2-hour timeout.');
+        }, callDuration);
+
+    } catch (error) {
+        console.error('Error starting call:', error);
+        errorDiv.textContent = 'Failed to start call.';
+        errorDiv.style.display = 'block';
+    }
+}
+
+// Handle incoming offer
+async function handleOffer(data) {
+    if (!peerConnection) {
+        createPeerConnection();
+    }
+
+    try {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: data.sdp }));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        websocket.send(JSON.stringify({
+            type: 'answer',
+            sdp: answer.sdp
+        }));
+
+        statusSpan.textContent = 'Call connected';
+        startCallBtn.disabled = true;
+        endCallBtn.disabled = false;
+
+        // Set 2-hour timeout
+        callTimeout = setTimeout(() => {
+            endCall();
+            alert('Call ended due to 2-hour timeout.');
+        }, callDuration);
+
+    } catch (error) {
+        console.error('Error handling offer:', error);
+    }
+}
+
+// Handle incoming answer
+async function handleAnswer(data) {
+    try {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: data.sdp }));
+        statusSpan.textContent = 'Call connected';
+    } catch (error) {
+        console.error('Error handling answer:', error);
+    }
+}
+
+// Handle ICE candidate
+async function handleIceCandidate(data) {
+    try {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+    } catch (error) {
+        console.error('Error handling ICE candidate:', error);
+    }
+}
+
+// End call
+function endCall() {
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localVideo.srcObject = null;
+    }
+    if (remoteVideo.srcObject) {
+        remoteVideo.srcObject.getTracks().forEach(track => track.stop());
+        remoteVideo.srcObject = null;
+    }
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+    if (websocket) {
+        websocket.close();
+    }
+    if (callTimeout) {
+        clearTimeout(callTimeout);
+    }
+
+    statusSpan.textContent = 'Call ended';
+    startCallBtn.disabled = false;
+    endCallBtn.disabled = true;
+}
+
+// Event listeners
+startCallBtn.addEventListener('click', startCall);
+endCallBtn.addEventListener('click', endCall);
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', endCall);
+</script>
+{% endblock %}

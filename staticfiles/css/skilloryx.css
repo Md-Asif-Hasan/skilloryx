@@ -1,0 +1,314 @@
+/* skillswap.css
+   Centered + high-contrast version for SkillSwap
+   Include after water.css
+*/
+
+/* ---------------------------
+   Theme variables (higher contrast)
+   --------------------------- */
+:root{
+  --bg-a: #C6788C;  /* strong dark pink */
+  --bg-b: #2DB8B2;  /* stronger aqua */
+  --accent1: #5A4BFF; /* stronger indigo */
+  --accent2: #FF6B40; /* vivid coral */
+  --accent3: #16B98F; /* vivid teal */
+  --text: #071022;    /* darker main text */
+  --muted: rgba(7,16,34,0.70);
+  --glass: rgba(255,255,255,0.30);
+  --card-bg: #ffffff; /* solid white for contrast */
+  --radius: 14px;
+  --shadow-sm: 0 8px 30px rgba(4,8,20,0.10);
+  --shadow-md: 0 18px 50px rgba(4,8,20,0.16);
+  --gap: 1.125rem;
+  --container-width: 1000px;
+}
+
+/* ---------------------------
+   Body + general layout (center everything)
+   --------------------------- */
+html,body{
+  height:100%;
+  margin:0;
+  font-family: "Bebas Neue", "Arial Black", sans-serif;
+  background: radial-gradient(1200px 600px at 10% 10%, rgba(90,75,255,0.08), transparent 8%),
+              linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 100%);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  color: var(--text);
+  line-height:1.5;
+  transition: background 250ms ease;
+  display:flex;
+  justify-content:center;
+}
+
+/* central page container */
+.page {
+  width:100%;
+  max-width: var(--container-width);
+  margin: 28px auto;
+  padding: 18px;
+  display:flex;
+  flex-direction:column;
+  align-items:center; /* center content horizontally */
+}
+
+/* small helper to keep main centered in older templates */
+main{
+  font-family: "Bebas Neue", "Arial Black", sans-serif;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap: 18px;
+}
+
+/* ---------------------------
+   Header / nav (centered)
+   --------------------------- */
+header{
+  font-family: "Bebas Neue", "Arial Black", sans-serif;
+  width:100%;
+  position: sticky;
+  top: 12px;
+  z-index: 40;
+  backdrop-filter: blur(8px);
+  display:flex;
+  justify-content:center;
+  margin-bottom: 6px;
+}
+
+nav{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.84));
+  padding:10px 18px;
+  border-radius: 18px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(5,10,30,0.04);
+  max-width: 980px;
+  width:100%;
+}
+
+/* nav links as bold high-contrast pills */
+nav a{
+  text-decoration:none;
+  padding:9px 14px;
+  border-radius:999px;
+  font-weight:700;
+  font-size:0.95rem;
+  color: var(--text);
+  transition: transform 140ms ease, color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+  border: 1px solid transparent;
+  background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.65));
+  box-shadow: 0 6px 16px rgba(10,18,36,0.04);
+}
+
+/* more contrast on hover */
+nav a:hover{
+  transform: translateY(-3px);
+  color: white;
+  background: linear-gradient(90deg, var(--accent1), var(--accent2));
+  box-shadow: 0 12px 30px rgba(10,18,36,0.14);
+}
+
+/* highlight logged-in user link - stronger */
+nav a[href*="/profile"], nav a[href*="/profile"] > * {
+  background: linear-gradient(90deg, rgba(90,75,255,0.18), rgba(22,185,143,0.12));
+  color: var(--accent1);
+  border: 1px solid rgba(90,75,255,0.14);
+}
+
+/* hide flexible spacer and keep nav centered */
+nav::after{ content:''; display:none; }
+
+/* stack nav items on very small screens */
+@media (max-width:520px){
+  nav{ flex-wrap:wrap; gap:8px; padding:10px; }
+}
+
+/* ---------------------------
+   Cards / lists (centered cards)
+   --------------------------- */
+.card{
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 18px;
+  border: 1px solid rgba(10,20,30,0.06);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+  width:100%;
+  max-width:720px;   /* ensure readable measure */
+  margin: 10px auto; /* center each card */
+  color: var(--text);
+  text-align: left;  /* keep inside content left-aligned for readability */
+}
+
+/* a stronger hover lift */
+.card:hover{
+  transform: translateY(-8px);
+  box-shadow: 0 28px 70px rgba(4,8,20,0.18);
+}
+
+/* grid for offers: center the grid and narrow columns for focus */
+.offers-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  justify-items:center; /* ensure each grid child is centered */
+  gap: var(--gap);
+  margin-top: 18px;
+  width:100%;
+}
+
+/* card header - slightly larger and bolder for contrast */
+.card h3{
+  margin:0 0 8px 0;
+  font-size:1.15rem;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+
+/* tag / skill badges - more saturated */
+.badge{
+  display:inline-block;
+  font-size:0.82rem;
+  padding:6px 10px;
+  border-radius:999px;
+  background: linear-gradient(90deg, rgba(90,75,255,0.14), rgba(255,107,64,0.09));
+  color: var(--accent1);
+  font-weight:700;
+  margin-right:6px;
+  margin-bottom:8px;
+  border:1px solid rgba(90,75,255,0.12);
+}
+
+/* ---------------------------
+   Buttons & forms (higher contrast)
+   --------------------------- */
+.btn{
+  display:inline-block;
+  padding:10px 14px;
+  border-radius: 12px;
+  cursor:pointer;
+  text-decoration:none;
+  font-weight:800;
+  border: none;
+  transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+  text-align:center;
+}
+
+/* primary button - vivid gradient */
+.btn-primary{
+  background: linear-gradient(90deg, var(--accent1), var(--accent2));
+  color: white;
+  box-shadow: 0 12px 30px rgba(90,75,255,0.20);
+  letter-spacing: 0.2px;
+}
+
+/* secondary button: strong outline */
+.btn-ghost{
+  background: transparent;
+  border: 2px solid rgba(7,16,34,0.08);
+  color: var(--text);
+  font-weight:700;
+}
+
+/* tight hover */
+.btn:hover{ transform: translateY(-4px); opacity:0.98; }
+
+/* forms - inputs, selects, textarea: crisper contrast */
+input[type="text"], input[type="email"], input[type="password"], select, textarea {
+  width:100%;
+  padding:12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(7,16,34,0.12);
+  background: #fff; /* pure white for highest contrast */
+  color: var(--text);
+  outline: none;
+  box-sizing:border-box;
+  transition: box-shadow 160ms ease, border-color 160ms ease;
+}
+
+/* focus glow: more visible */
+input:focus, select:focus, textarea:focus{
+  box-shadow: 0 10px 30px rgba(22,185,143,0.12), 0 4px 10px rgba(90,75,255,0.06);
+  border-color: rgba(22,185,143,0.35);
+}
+
+/* form labels: darker */
+label{
+  display:block;
+  margin-bottom:6px;
+  font-weight:700;
+  color:var(--text);
+}
+
+/* ---------------------------
+   Utility: centered profile avatar
+   --------------------------- */
+.avatar{
+  width:44px;
+  height:44px;
+  border-radius:999px;
+  overflow:hidden;
+  display:inline-block;
+  vertical-align:middle;
+  border: 2px solid rgba(255,255,255,0.85);
+  box-shadow: 0 8px 20px rgba(10,18,36,0.08);
+}
+
+/* profile inline - center aligned */
+.profile-inline{
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+}
+
+/* ---------------------------
+   Headings + meta (contrast)
+   --------------------------- */
+h1,h2,h3{
+  position:relative;
+  text-align:center; /* headings centered on page for a centered layout */
+}
+h1::after, h2::after, h3::after{
+  content:'';
+  height:5px;
+  width:72px;
+  border-radius: 8px;
+  display:block;
+  margin:10px auto 0 auto;
+  background: linear-gradient(90deg, var(--accent1), var(--accent3), var(--accent2));
+  opacity:1;
+}
+
+/* meta text: slightly darker muted */
+.meta{
+  font-size:0.88rem;
+  color:var(--muted);
+  text-align:center;
+}
+
+/* ---------------------------
+   Responsive tweaks
+   --------------------------- */
+@media (max-width:720px){
+  nav{
+    gap:8px;
+    padding:10px;
+    overflow:auto;
+    align-items:center;
+  }
+  main{
+    padding:12px;
+  }
+  .card{ padding:14px; border-radius:12px; max-width:100%; }
+  .page{ padding:12px; }
+}
+
+/* respects user preference for reduced motion */
+@media (prefers-reduced-motion: reduce){
+  *{ transition:none !important; animation:none !important; }
+}

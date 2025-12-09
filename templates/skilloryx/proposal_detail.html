@@ -1,0 +1,278 @@
+{% extends 'skilloryx/base.html' %}
+
+{% block title %}Proposal #{{ proposal.id }} - SkillOryx{% endblock %}
+
+{% block content %}
+<style>
+  .badge-status {
+    font-size: 1rem;
+    padding: 0.6rem 1rem;
+  }
+  .badge-pending {
+    background: var(--warning);
+  }
+  .badge-accepted {
+    background: var(--success);
+  }
+  .badge-declined {
+    background: #ff6b6b;
+  }
+  .badge-completed {
+    background: #4ecdc4;
+  }
+  .message-box {
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(233, 69, 96, 0.2);
+    border-radius: 10px;
+    padding: 1rem;
+    height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+  }
+  .message-sent {
+    background: rgba(233, 69, 96, 0.2);
+    border-left: 3px solid var(--highlight);
+  }
+  .message-received {
+    background: rgba(0, 212, 170, 0.2);
+    border-left: 3px solid var(--success);
+  }
+</style>
+
+<div class="row">
+  <div class="col-md-8">
+    <!-- Proposal Details Card -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="fas fa-handshake"></i> Proposal #{{ proposal.id }}
+      </div>
+      <div class="card-body">
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <p class="text-light mb-1">From</p>
+            <h5 class="mb-0">
+              <i class="fas fa-user"></i>
+              <a href="{% url 'profile' proposal.proposer.user.username %}" style="color: var(--highlight);">
+                {{ proposal.proposer.user.username }}
+              </a>
+            </h5>
+          </div>
+          <div class="col-md-6">
+            <p class="text-light mb-1">To</p>
+            <h5 class="mb-0">
+              <i class="fas fa-user"></i>
+              <a href="{% url 'profile' proposal.responder.user.username %}" style="color: var(--highlight);">
+                {{ proposal.responder.user.username }}
+              </a>
+            </h5>
+          </div>
+        </div>
+
+        <hr style="border-color: rgba(233, 69, 96, 0.2);">
+
+        <!-- Skills Being Swapped -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="alert" style="background: linear-gradient(135deg, rgba(233, 69, 96, 0.15) 0%, rgba(233, 107, 150, 0.15) 100%); border: 2px solid rgba(233, 69, 96, 0.3); border-radius: 10px;">
+              <p class="text-light mb-1">
+                <i class="fas fa-arrow-right"></i> {{ proposal.proposer.user.username }} Offers
+              </p>
+              <h5 class="mb-0" style="color: var(--highlight);">{{ proposal.offer_from_proposer.skill.name }}</h5>
+              <small class="text-light">{{ proposal.offer_from_proposer.get_level_display }}</small>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="alert" style="background: linear-gradient(135deg, rgba(0, 212, 170, 0.15) 0%, rgba(0, 180, 148, 0.15) 100%); border: 2px solid rgba(0, 212, 170, 0.3); border-radius: 10px;">
+              <p class="text-light mb-1">
+                <i class="fas fa-arrow-left"></i> {{ proposal.responder.user.username }} Offers
+              </p>
+              <h5 class="mb-0" style="color: var(--success);">{{ proposal.offer_from_responder.skill.name }}</h5>
+              <small class="text-light">{{ proposal.offer_from_responder.get_level_display }}</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="mb-3">
+          <p class="text-light mb-1">Status</p>
+          <span class="badge badge-status badge-{{ proposal.status }}">
+            {{ proposal.get_status_display|upper }}
+          </span>
+        </div>
+
+        <!-- Video Call Button -->
+        {% if proposal.status == 'accepted' %}
+          <div class="mb-3">
+            <a href="{% url 'video_call' proposal.id %}" class="btn btn-primary">
+              <i class="fas fa-video"></i> Start Video Call
+            </a>
+          </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        {% if user.profile == proposal.responder and proposal.status == 'pending' %}
+           <hr style="border-color: rgba(233, 69, 96, 0.2);">
+           <div class="d-grid gap-2">
+             <form method="post" action="{% url 'proposal_accept' proposal.id %}">
+               {% csrf_token %}
+               <button type="submit" class="btn btn-success w-100">
+                 <i class="fas fa-check-circle"></i> Accept Proposal
+               </button>
+             </form>
+             <form method="post" action="{% url 'proposal_decline' proposal.id %}">
+               {% csrf_token %}
+               <button type="submit" class="btn btn-danger w-100">
+                 <i class="fas fa-times-circle"></i> Decline Proposal
+               </button>
+             </form>
+           </div>
+         {% elif user.profile == proposal.responder and proposal.status == 'accepted' %}
+           <hr style="border-color: rgba(233, 69, 96, 0.2);">
+           <div class="d-grid gap-2">
+             <form method="post" action="{% url 'proposal_decline' proposal.id %}">
+               {% csrf_token %}
+               <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Are you sure you want to reject this accepted proposal?')">
+                 <i class="fas fa-times-circle"></i> Reject Proposal
+               </button>
+             </form>
+           </div>
+         {% endif %}
+      </div>
+    </div>
+
+    <!-- Chat Section -->
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-comments"></i> Conversation
+      </div>
+      <div class="card-body">
+        <div id="chat" class="message-box">
+          {% for message in proposal.messages.all %}
+            <div class="mb-3 p-3 rounded {% if message.sender == user.profile %}message-sent{% else %}message-received{% endif %}">
+              <p class="mb-1">
+                <strong>{{ message.sender.user.username }}</strong>
+                <small class="text-light">{{ message.created_at|date:"M d, g:i A" }}</small>
+              </p>
+              <p class="mb-0">{{ message.content }}</p>
+            </div>
+          {% empty %}
+            <div class="text-center py-4">
+              <i class="fas fa-comments" style="font-size: 2rem; color: var(--text-muted);"></i>
+              <p class="text-light mt-2">No messages yet. Start the conversation!</p>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Message Form -->
+        <form id="msgform" class="mb-0">
+          {% csrf_token %}
+          <div class="input-group">
+            <input
+              type="text"
+              id="msg"
+              class="form-control"
+              placeholder="Type your message..."
+              style="background: rgba(255, 255, 255, 0.08); border: 2px solid rgba(233, 69, 96, 0.2); color: var(--text-light);"
+            >
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Info -->
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="fas fa-info-circle"></i> Details
+      </div>
+      <div class="card-body">
+        <div class="mb-3 pb-3" style="border-bottom: 1px solid rgba(233, 69, 96, 0.2);">
+          <p class="text-light mb-1">Sent</p>
+          <p>{{ proposal.created_at|date:"M d, Y \u2022 g:i A" }}</p>
+        </div>
+        <div>
+          <p class="text-light mb-1">Last Updated</p>
+          <p>{{ proposal.updated_at|date:"M d, Y \u2022 g:i A" }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function csrftoken() {
+    var name = "csrftoken";
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const chatDiv = document.getElementById('chat');
+const form = document.getElementById('msgform');
+
+async function fetchMessages() {
+  try {
+    const r = await fetch("{% url 'proposal_message' proposal.id %}");
+    const data = await r.json();
+    chatDiv.innerHTML = '';
+    if (data.messages && data.messages.length > 0) {
+      data.messages.forEach(m => {
+        const d = document.createElement('div');
+        d.className = 'mb-3 p-3 rounded';
+        const isSent = m['sender__user__username'] === '{{ user.username }}';
+        d.classList.add(isSent ? 'message-sent' : 'message-received');
+        d.innerHTML = `
+          <p class="mb-1">
+            <strong>${m['sender__user__username']}</strong>
+            <small class="text-light">${new Date(m.created_at).toLocaleString()}</small>
+          </p>
+          <p class="mb-0">${m.content}</p>
+        `;
+        chatDiv.appendChild(d);
+      });
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+  }
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('msg').value.trim();
+  if (!msg) return;
+
+  try {
+    const csrft = csrftoken();
+    const res = await fetch("{% url 'proposal_message' proposal.id %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': csrft
+      },
+      body: new URLSearchParams({ content: msg })
+    });
+    document.getElementById('msg').value = '';
+    await fetchMessages();
+  } catch (error) {
+    console.error('Error sending message:', error);
+  }
+});
+
+// Polling every 2 seconds
+setInterval(fetchMessages, 2000);
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'skilloryx/base.html' %}
+
+{% block title %}Propose Swap - SkillOryx{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-handshake"></i> Propose a Skill Swap
+      </div>
+      <div class="card-body">
+
+        <!-- Target Offer -->
+        <div class="alert" style="background: linear-gradient(135deg, rgba(0, 212, 170, 0.15) 0%, rgba(0, 180, 148, 0.15) 100%); border: 2px solid rgba(0, 212, 170, 0.3); border-radius: 10px;">
+          <h5 class="mb-3">
+            <i class="fas fa-gift" style="color: var(--success);"></i> They're Offering
+          </h5>
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <h4 class="mb-0" style="color: var(--success);">{{ target.skill.name }}</h4>
+            </div>
+            <div class="col-md-6 text-md-end">
+              <span class="badge badge-success">{{ target.get_level_display }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Your Offer -->
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="mb-4">
+            <label for="our_offer" class="form-label">
+              <i class="fas fa-star"></i> Choose Your Offer to Trade
+            </label>
+            <select name="our_offer" id="our_offer" class="form-select" required>
+              <option value="">-- Select an offer --</option>
+              {% for offer in my_offers %}
+                <option value="{{ offer.id }}">
+                  {{ offer.skill.name }} — {{ offer.get_level_display }}
+                </option>
+              {% empty %}
+                <option disabled>
+                  ❌ You have no offers yet. Create one first!
+                </option>
+              {% endfor %}
+            </select>
+            <small class="text-muted d-block mt-2">
+              <i class="fas fa-info-circle"></i> Don't have an offer?
+              <a href="/offers/create/" style="color: var(--highlight);">Create one now</a>
+            </small>
+          </div>
+
+          <!-- Message -->
+          <div class="mb-4">
+            <label for="message" class="form-label">
+              <i class="fas fa-comment"></i> Message (Optional)
+            </label>
+            <textarea name="message" id="message" class="form-control" rows="4" placeholder="Tell them why you'd like to swap..."></textarea>
+            <small class="text-muted d-block mt-2">
+              Help them understand your interest and build a connection
+            </small>
+          </div>
+
+          <!-- Buttons -->
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fas fa-paper-plane"></i> Send Proposal
+            </button>
+            <a href="{% url 'offer_detail' target.id %}" class="btn btn-outline-light">
+              <i class="fas fa-arrow-left"></i> Go Back
+            </a>
+          </div>
+        </form>
+
+        <hr style="border-color: rgba(233, 69, 96, 0.2); margin: 2rem 0;">
+
+        <!-- Info Box -->
+        <div class="alert" style="background: rgba(233, 69, 96, 0.1); border: 2px solid rgba(233, 69, 96, 0.3); border-radius: 10px; border-left: 4px solid var(--highlight);">
+          <p class="mb-0">
+            <i class="fas fa-lightbulb"></i>
+            <strong>Tip:</strong> A friendly message can increase your chances of getting a positive response!
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

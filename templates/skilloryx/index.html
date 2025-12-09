@@ -1,0 +1,61 @@
+{% extends 'skilloryx/base.html' %}
+
+{% block title %}Home - SkillOryx{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <h1><i class="fas fa-star"></i> Welcome to SkillOryx</h1>
+  <p>Exchange your skills with amazing people in your community</p>
+  {% if not user.is_authenticated %}
+    <a href="{% url 'signup' %}" class="btn btn-primary btn-lg mt-3">
+      <i class="fas fa-user-plus"></i> Join Now
+    </a>
+  {% else %}
+    <a href="/offers/" class="btn btn-primary btn-lg mt-3">
+      <i class="fas fa-search"></i> Browse Offers
+    </a>
+  {% endif %}
+</div>
+
+<div class="row">
+  <div class="col-md-6 mb-4">
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-handshake"></i> Recent Offers
+      </div>
+      <div class="card-body">
+        {% for offer in offers %}
+          <div class="mb-3 pb-3" style="border-bottom: 1px solid rgba(233, 69, 96, 0.2);">
+            <h5 class="card-title">{{ offer.skill.name }}</h5>
+            <p class="text-light mb-2">{{ offer.profile.user.username }}</p>
+            <span class="badge badge-primary">{{ offer.get_level_display }}</span>
+          </div>
+        {% empty %}
+          <p class="text-light">No offers yet. Be the first!</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 mb-4">
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-lightbulb"></i> Recommended For You
+      </div>
+      <div class="card-body">
+        {% for suggestion in suggestions %}
+          <div class="mb-3 pb-3" style="border-bottom: 1px solid rgba(233, 69, 96, 0.2);">
+            <h5 class="card-title">{{ suggestion.2.skill.name }}</h5>
+            <p class="text-light mb-2">{{ suggestion.0.user.username }}</p>
+            <a href="/offers/{{ suggestion.2.id }}/" class="btn btn-sm btn-primary">
+              <i class="fas fa-eye"></i> View
+            </a>
+          </div>
+        {% empty %}
+          <p class="text-light">Complete your profile to get recommendations!</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'skilloryx/base.html' %}
+
+{% block title %}Offers - SkillOryx{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1><i class="fas fa-list"></i> All Offers</h1>
+  {% if user.is_authenticated %}
+    <a href="/offers/create/" class="btn btn-primary">
+      <i class="fas fa-plus"></i> Create Offer
+    </a>
+  {% endif %}
+</div>
+
+<div class="row">
+   {% for offer in offers %}
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <i class="fas fa-award"></i> {{ offer.skill.name }}
+        </div>
+        <div class="card-body">
+          <p class="card-text">{{ offer.description|truncatewords:20 }}</p>
+          <div class="mb-3">
+            <span class="badge badge-primary">{{ offer.get_level_display }}</span>
+            {% if offer.available_online %}
+              <span class="badge badge-success">
+                <i class="fas fa-globe"></i> Online Available
+              </span>
+            {% endif %}
+          </div>
+          <p class="text-light small">
+            <i class="fas fa-user"></i> {{ offer.profile.user.username }}
+          </p>
+        </div>
+        <div class="card-footer bg-transparent border-top" style="border-top-color: rgba(233, 69, 96, 0.2) !important;">
+          <a href="/offers/{{ offer.id }}/" class="btn btn-sm btn-primary w-100">
+            <i class="fas fa-eye"></i> View Details
+          </a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <i class="fas fa-inbox" style="font-size: 3rem; color: var(--text-light);"></i>
+          <p class="mt-3">No offers available yet.</p>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}
